@@ -78,7 +78,7 @@ stream.on('tweet', async(tweet) => {
         if (keyWordsInTweet.length != 0) {
             if (replyPlace != "place") {
                 replySearchQuery = 'verified' + ' ' + replyPlace + ' ' + replyItems + ' ' + '-need' + ' ' + '-needed' + ' ' + '-required'
-                let response = await client.tweets.search({ q: replySearchQuery, count: 5 })
+                let response = await client.tweets.search({ q: replySearchQuery, count: 2 })
                 let username = ''
                 let id_str = ''
                 let id = 0
@@ -114,10 +114,10 @@ stream.on('tweet', async(tweet) => {
                     stream.stop()
                     setTimeout(() => {
                         console.log();
-                        console.log('36 seconds over.');
+                        console.log('120 seconds over.');
                         console.log();
                         stream.start();
-                    }, 36000);
+                    }, 120000);
                 }
             }
         }
