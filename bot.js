@@ -1,7 +1,14 @@
 const Twit = require('twit')
 const config = require('./config')
 const mongoose = require('mongoose')
+const { TwitterClient } = require('twitter-api-client')
 const T = new Twit(config)
+const client = new TwitterClient({
+    apiKey: process.env.CONSUMER_KEY,
+    apiSecret: process.env.CONSUMER_SECRET,
+    accessToken: process.env.ACCESS_TOKEN,
+    accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
+})
 
 const Tweet = require('./models/Tweet')
 
@@ -18,8 +25,8 @@ const cities = ["delhi", "mumbai", "kolkata", "bangalore", "chennai", "hyderabad
 
 var stream = T.stream('statuses/filter', { track: searchKeywords })
 
-function replyTextParser(tweetSearchObject) {
-    replyText = 'Here\'s what we found based on your need:\n\n'
+function replyTextParser(tweetSearchObject, username) {
+    replyText = `@${username}\nHere's what we found based on your need:\n\n`
     tweetSearchObject.statuses.forEach((tweet, index) => {
         replyText += String(index + 1) + '. ' + 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str + '\n'
     })
@@ -39,8 +46,6 @@ function tweeted(err, reply) {
 
 stream.on('tweet', async(tweet) => {
     const tweetText = tweet.text
-    const name = tweet.user.screen_name
-    const id = tweet.id_str
     if (tweetText.includes("need") || tweetText.includes("needed")) {
         let replyItems = "("
         let replyPlace = "place"
@@ -65,40 +70,40 @@ stream.on('tweet', async(tweet) => {
                 replyPlace = textSplitArray[i].toLowerCase()
             }
         }
+        let replyText = ''
         if (keyWordsInTweet.length != 0) {
             if (replyPlace != "place") {
-                replySearchQuery = 'verified' + ' ' + replyPlace + ' ' + replyItems + ' ' + '-need' + ' ' + '-needed'
+                replySearchQuery = 'verified' + ' ' + replyPlace + ' ' + replyItems + ' ' + '-need' + ' ' + '-needed' + ' ' + '-required'
                 if (!tweet.retweeted_status) {
                     console.log(tweet.text)
-                    T.get('search/tweets', { q: replySearchQuery, count: 5 }, (err, data, response) => {
-                        let replyText = replyTextParser(data)
-                        T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.id_str }, tweeted)
-                        let dbTweet = new Tweet({
-                            id: tweet.id,
-                            id_str: tweet.id_str,
-                            bot_reply: replyText,
-                            link: 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str,
-                            tweet_str: tweet.text
-                        })
-                        dbTweet.save()
+                    let response = await client.tweets.search({ q: replySearchQuery, count: 5 })
+                    replyText = replyTextParser(response, tweet.user.screen_name)
+                    let dbTweet = new Tweet({
+                        id: tweet.id,
+                        id_str: tweet.id_str,
+                        bot_reply: replyText,
+                        link: 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str,
+                        tweet_str: tweet.text
                     })
+                    dbTweet.save()
+                    console.log('https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str + '\n')
+                    T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.id_str }, tweeted)
 
                 } else {
-                    let dbTweet = await Tweet.findOne({ id: tweet.retweeted_status.id })
+                    let dbTweet = await Tweet.findOne({ id_str: tweet.retweeted_status.id_str })
                     if (!dbTweet) {
-                        console.log(tweet.retweeted_status)
-                        T.get('search/tweets', { q: replySearchQuery, count: 5 }, (err, data, response) => {
-                            let replyText = replyTextParser(data)
-                            T.post('statuses/update', { status: replyTextParser(data), in_reply_to_status_id: tweet.retweeted_status.id_str }, tweeted);
-                            let dbTweet = new Tweet({
-                                id: tweet.retweeted_status.id,
-                                id_str: tweet.retweeted_status.id_str,
-                                bot_reply: replyText,
-                                link: 'https://twitter.com/' + tweet.retweeted_status.user.screen_name + '/status/' + tweet.retweeted_status.id_str,
-                                tweet_str: tweet.retweeted_status.text
-                            })
-                            dbTweet.save()
+                        let response = await client.tweets.search({ q: replySearchQuery, count: 5 })
+                        replyText = replyTextParser(response, tweet.retweeted_status.user.screen_name)
+                        console.log('https://twitter.com/' + tweet.retweeted_status.user.screen_name + '/status/' + tweet.retweeted_status.id_str + '\n')
+                        let dbTweet = new Tweet({
+                            id: tweet.retweeted_status.id,
+                            id_str: tweet.retweeted_status.id_str,
+                            bot_reply: replyText,
+                            link: 'https://twitter.com/' + tweet.retweeted_status.user.screen_name + '/status/' + tweet.retweeted_status.id_str,
+                            tweet_str: tweet.retweeted_status.text
                         })
+                        dbTweet.save()
+                        T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.retweeted_status.id_str }, tweeted)
                     }
                 }
             }
