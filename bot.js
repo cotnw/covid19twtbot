@@ -1,5 +1,6 @@
 const Twit = require('twit')
 const config = require('./config')
+const generateBitlyUrl = require('./bitly')
 const mongoose = require('mongoose')
 const { TwitterClient } = require('twitter-api-client')
 const T = new Twit(config)
@@ -25,12 +26,16 @@ const cities = ["delhi", "mumbai", "kolkata", "bangalore", "chennai", "hyderabad
 var stream = T.stream('statuses/filter', { track: '@covid19twtbot' })
 
 function replyTextParser(tweetSearchObject, username, originalPosterUsername) {
-    replyText = `@${username} @${originalPosterUsername}\nHere's what we found based on your need:\n\n`
-    tweetSearchObject.statuses.forEach((tweet, index) => {
-        replyText += String(index + 1) + '. ' + 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str + '\n'
-    })
+    replyText = `@${username} @${originalPosterUsername}\nHere's what we found based on your need:\n\n`;
+
+    tweetSearchObject.statuses.forEach(async (tweet, index) => {
+        const tweetUrl = 'https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str;
+        const bitlyUrl = await generateBitlyUrl(tweetUrl);
+        replyText += String(index + 1) + '. ' + bitlyUrl + '\n'
+    });
+
     replyText += '\nFind more here: https://twitter.com/search?q=' + tweetSearchObject.search_metadata.query + '\nhttps://drive.google.com/drive/folders/1y8fjrbdGEGmcStkNE_Jf5sNRaDCY4zRA'
-    return replyText
+    return replyText;
 }
 
 function tweeted(err, reply) {
