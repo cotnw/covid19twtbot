@@ -78,7 +78,7 @@ async function tweetEvent(tweet) {
                         let username = tweet.user.screen_name
                         const originalPosterUsername = originalTweet.user.screen_name
                         console.log('https://twitter.com/' + tweet.user.screen_name + '/status/' + tweet.id_str + '\n')
-                        let replyText = `@${username} @${originalPosterUsername}\nCheck out these tweets for leads: https://twitter.com/search?q=${replySearchQuery}`
+                        let replyText = `@${username} @${originalPosterUsername}\nCheck out these tweets for leads:\nhttps://twitter.com/search?q=${replySearchQuery}`
                         if (username != '') {
                             console.log("cp7", replySearchQuery)
                             T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.id_str }, tweeted)
