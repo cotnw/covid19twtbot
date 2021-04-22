@@ -1,5 +1,4 @@
 const axios = require('axios');
-const fetch = require('node-fetch');
 
 const bitlyAccessToken = process.env.BITLY_ACCESS_TOKEN;
 
