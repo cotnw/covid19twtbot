@@ -73,7 +73,7 @@ async function tweetEvent(tweet) {
                         let replyText = `@${username} @${originalPosterUsername}\nCheck out these tweets for leads:\nhttps://twitter.com/search?q=${replySearchQuery}`
                         if (username != '') {
                             console.log("cp6", replyText)
-                            // T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.id_str }, tweeted)
+                            T.post('statuses/update', { status: replyText, in_reply_to_status_id: tweet.id_str }, tweeted)
                         }
                     }
                 }
