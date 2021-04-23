@@ -30,8 +30,8 @@ async function tweetEvent(tweet) {
         if(tweet.in_reply_to_screen_name != 'COVID19twtbot' && tweet.in_reply_to_screen_name != null) {
             console.log("cp1")
             const replyId = tweet.in_reply_to_status_id_str
-            const originalTweet = await client.tweets.statusesShow({ id: replyId })
-            const originalTweetText = originalTweet.text.toLowerCase()
+            const originalTweet = await client.tweets.statusesShow({ id: replyId, tweet_mode: 'extended' })
+            const originalTweetText = originalTweet.full_text.toLowerCase()
             console.log("cp2", originalTweetText)
             let moveAhead = false
             searchKeywords.forEach(keyword => {
