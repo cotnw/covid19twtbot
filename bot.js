@@ -91,21 +91,21 @@ function createReplyText(text, u1, u2) {
             moveAhead = true
         } 
     })
-    if(!moveAhead) { return "The bot can't find any keyword in the tweet" }
+    if(!moveAhead) { return `@${u1} @${u2} The bot can't find any keyword in the tweet` }
     const keyWordsArray = []
     searchKeywords.forEach(keyword => {
         if(tweetText.includes(keyword)) {
             keyWordsArray.push(keyword)
         }
     })
-    if(keyWordsArray.length == 0) { return "The bot can't find any keyword in the tweet"}
+    if(keyWordsArray.length == 0) { return `@${u1} @${u2} The bot can't find any keyword in the tweet`}
     let place = 'none'
     cities.forEach(city => {
         if(tweetText.includes(city)) {
             place = city
         }
     })
-    if(place == 'none') { return "The bot can't find the name of the place" }
+    if(place == 'none') { return `@${u1} @${u2} The bot can't find the name of the place` }
     let replyItems = '('
     for (let i = 0; i < keyWordsArray.length; i++) {
         if (i == keyWordsArray.length - 1) {
