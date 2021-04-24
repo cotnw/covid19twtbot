@@ -91,21 +91,21 @@ function createReplyText(text, u1, u2) {
             moveAhead = true
         } 
     })
-    if(!moveAhead) { return `@${u1} @${u2} The bot can't find any keyword in the tweet` }
+    if(!moveAhead) { return {success: false, message: `@${u1} @${u2} The bot can't find any keyword in the tweet`} }
     const keyWordsArray = []
     searchKeywords.forEach(keyword => {
         if(tweetText.includes(keyword)) {
             keyWordsArray.push(keyword)
         }
     })
-    if(keyWordsArray.length == 0) { return `@${u1} @${u2} The bot can't find any keyword in the tweet`}
+    if(keyWordsArray.length == 0) { return {success: false, message: `@${u1} @${u2} The bot can't find any keyword in the tweet`} }
     let place = 'none'
     cities.forEach(city => {
         if(tweetText.includes(city)) {
             place = city
         }
     })
-    if(place == 'none') { return `@${u1} @${u2} The bot can't find the name of the place` }
+    if(place == 'none') { return {success: false, message: `@${u1} @${u2} The bot can't find the name of the place`} }
     let replyItems = '('
     for (let i = 0; i < keyWordsArray.length; i++) {
         if (i == keyWordsArray.length - 1) {
@@ -115,7 +115,7 @@ function createReplyText(text, u1, u2) {
         }
     }
     const replySearchQuery = 'verified' + '%20' + place + '%20' + replyItems + '%20' + '-need' + '%20' + '-needed' + '%20' + '-required&f=live'
-    const replyText = `@${u1} @${u2} Check out these tweets for leads:\nhttps://twitter.com/search?q=${replySearchQuery}\n\nFind more here: https://drive.google.com/drive/folders/1y8fjrbdGEGmcStkNE_Jf5sNRaDCY4zRA`
+    const replyText = {success: true, message: `@${u1} @${u2} Check out these tweets for leads:\nhttps://twitter.com/search?q=${replySearchQuery}\n\nFind more here: https://drive.google.com/drive/folders/1y8fjrbdGEGmcStkNE_Jf5sNRaDCY4zRA`}
     return replyText
 }
 
@@ -155,8 +155,12 @@ function streamConnect(retryAttempt) {
             }
         
             try {
-                const replyText = createReplyText(response.body.includes.tweets[0].text, response.body.includes.users[0].username, response.body.includes.users[1].username)
-                T.post('statuses/update', { status: replyText, in_reply_to_status_id: idToReply }, tweeted)
+                const replyResponse = createReplyText(response.body.includes.tweets[0].text, response.body.includes.users[0].username, response.body.includes.users[1].username)
+                if(replyResponse.success == true) {
+                    T.post('statuses/update', { status: replyResponse.message, in_reply_to_status_id: idToReply }, tweeted)
+                } else {
+                    console.log(replyResponse.message)
+                }
             } catch (e) {
                 console.log(e)
             }
