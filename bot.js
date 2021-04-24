@@ -141,33 +141,34 @@ function streamConnect(retryAttempt) {
         try {
             const json = JSON.parse(data);
             console.log(json);
-            const idToReply = json.data.id
-            const getTweetURL = `https://api.twitter.com/2/tweets/${idToReply}?expansions=referenced_tweets.id,entities.mentions.username,author_id&tweet.fields=text`
-            const response = await needle('get', getTweetURL, {
-                headers: {
-                    "authorization": `Bearer ${token}`
+            const replyText = json.data.text
+            if(!replyText.startsWith('RT')) {
+                const idToReply = json.data.id
+                const getTweetURL = `https://api.twitter.com/2/tweets/${idToReply}?expansions=referenced_tweets.id,entities.mentions.username,author_id&tweet.fields=text`
+                const response = await needle('get', getTweetURL, {
+                    headers: {
+                        "authorization": `Bearer ${token}`
+                    }
+                })
+            
+                if (response.statusCode !== 200) {
+                    console.log("Error:", response.statusMessage, response.statusCode)
+                    throw new Error(response.body);
                 }
-            })
-        
-            if (response.statusCode !== 200) {
-                console.log("Error:", response.statusMessage, response.statusCode)
-                throw new Error(response.body);
-            }
-        
-            try {
-                const replyTweetText = response.body.includes.tweets[0].text
-                if(!replyTweetText.startsWith('RT')) {
-                    const replyResponse = createReplyText(replyTweetText, response.body.includes.users[0].username, response.body.includes.users[1].username)
+            
+                try {
+                    const replyResponse = createReplyText(response.body.includes.tweets[0].text, response.body.includes.users[0].username, response.body.includes.users[1].username)
                     if(replyResponse.success == true) {
                         T.post('statuses/update', { status: replyResponse.message, in_reply_to_status_id: idToReply }, tweeted)
                     } else {
                         console.log(replyResponse.message)
                     }
+                } catch (e) {
+                    console.log(e)
                 }
-            } catch (e) {
-                console.log(e)
+            } else {
+                console.log("The tweet is a retweet.")
             }
-
             retryAttempt = 0;
         } catch (e) {
             if (data.detail === "This stream is currently at the maximum allowed connection limit.") {
