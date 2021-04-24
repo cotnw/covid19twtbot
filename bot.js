@@ -155,11 +155,14 @@ function streamConnect(retryAttempt) {
             }
         
             try {
-                const replyResponse = createReplyText(response.body.includes.tweets[0].text, response.body.includes.users[0].username, response.body.includes.users[1].username)
-                if(replyResponse.success == true) {
-                    T.post('statuses/update', { status: replyResponse.message, in_reply_to_status_id: idToReply }, tweeted)
-                } else {
-                    console.log(replyResponse.message)
+                const replyTweetText = response.body.includes.tweets[0].text
+                if(!replyTweetText.startsWith('RT')) {
+                    const replyResponse = createReplyText(replyTweetText, response.body.includes.users[0].username, response.body.includes.users[1].username)
+                    if(replyResponse.success == true) {
+                        T.post('statuses/update', { status: replyResponse.message, in_reply_to_status_id: idToReply }, tweeted)
+                    } else {
+                        console.log(replyResponse.message)
+                    }
                 }
             } catch (e) {
                 console.log(e)
